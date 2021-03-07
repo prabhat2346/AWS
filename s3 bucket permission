@@ -1,0 +1,311 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::s3-prod-terraform-bucket"
+    },
+    {
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": ["s3:GetObject", "s3:PutObject"],
+      "Resource": "arn:aws:s3:::s3-prod-terraform-bucket/prod/terraform.tfstate"
+    }
+  ]
+}
+
+###############################
+
+{
+  "Version": "2012-10-17",
+  "Id": "S3PolicyId1",
+  "Statement": [
+    {
+      "Sid": "IPAllow",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:*",
+      "Resource": "arn:aws:s3:::examplebucket/*",
+      "Condition": {
+         "IpAddress": {"aws:SourceIp": "54.240.143.0/24"}
+      } 
+    } 
+  ]
+}
+
+################################## cross account access for s3#####################
+s3 bucket is in your accountA & writing this bucket policy in accountA
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "111",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::453314488441:root"    // account id of 2nd accountB
+            },
+            "Action": "s3:*",
+            "Resource": [
+                "arn:aws:s3:::kplabs-demo-crossover",  // access for bucket
+                "arn:aws:s3:::kplabs-demo-crossover/*"  // access for only content in s3 
+            ]
+        }
+    ]
+}
+##############presign Url####################
+--expires-in (integer) Number of seconds until the pre-signed URL expires. Default is 3600 seconds.
+To create a pre-signed URL with the default one hour lifetime that links to an object in an S3 bucket
+aws s3 presign s3://awsexamplebucket/test2.txt
+
+Output:
+
+https://awsexamplebucket.s3.amazonaws.com/test2.txt?AWSAccessKeyId=AKIAEXAMPLEACCESSKEY&Signature=EXHCcBe%EXAMPLEKnz3r8O0AgEXAMPLE&Expires=1555531131
+
+2 
+To create a pre-signed URL with a custom lifetime that links to an object in an S3 bucket
+
+The following presign command generates a pre-signed URL for a specified bucket and key that is valid for one week:
+
+aws s3 presign s3://awsexamplebucket/test2.txt --expires-in 604800
+
+Output:
+
+https://examplebucket.s3.amazonaws.com/test2.txt?AWSAccessKeyId=AKIAEXAMPLEACCESSKEY&Signature=EXHCcBe%EXAMPLEKnz3r8O0AgEXAMPLE&Expires=1556132848
+
+
+################ s3 cross region replication #############
+for this source & destination must have versioning enabled.
+bucket> management> replication
+need to create role for this.
+
+####### s3 object lock ############
+WORM model: write once read many
+Retantion mode
+1 Governance mode > after deploying in this mode , aws accounts with specific iam permission can able to delete object.
+2 compliance mode > Even root are not able to delete object.
+
+How to enable ths mode
+During creation of bucket go to advance setting and enable object lock.
+after enabling object lock versioning is automatically enabled.
+
+go to properties and you are able to see object lock now click on this and you are able to see both the rule.
+and need to set the retantion period =1 day /2 day.
+so upto 1 day 0r 2 day no one can delete.
+
+
+
+##########Permission boundry ###############
+we can set a highest no of policy so that any user can not create beyond that policy.
+how can i set> go to iam user ,permission boundry.
+even you have administrator access but you define a permission boundry of s3 full access then you only perform s3,raher then ec2 or other services.
+
+
+########## iam & s3 ##############
+iam policy are applied to bucket level and object level.
+ex.
+Bucket level : ["arn:aws:s3:::demo"]
+object level : ["arn:aws:s3:::demo/*"]
+
+
+############ IAM ################
+If we have a allow and deny policy for a services in that case deny will take precedence.
+
+case 1
+there is 5 bucket we need to access 4 bucket and need to prevent 5th one
+Ans: we give the permision of amazons3 full access and need to create an external policy of deny for 5th.
+
+Identity based policy are attached with IAM user,group and role.
+Resources based are directly attached with resources such as s3,sqs...
+suppose if any user doesn't have any IAM policy but if they have full access inside resources then he will be able to access that resources
+
+IAM Policy : It provides a access to a particulare resources.
+version : define the version of policy language.
+two supported version 
+1 2012-10-17 > currently ised 
+2008-10-17 > older one
+principal : this element is used to specify the things like IAM user .federated user, iam roles, aws services.
+Not Principal : jo arn aap pass karogay usko allow otherwise deny argar aapne effect may Deny likha haii toh vice-versa
+4 element of IAM policy
+1 STatememt
+2 Affect  : Allow or deny
+3 Action : List,create ,delete a specific resources.
+4 Resource. > Define the object that the statement is covered menas on which reources you want to perform action.
+  Resource : you just need to put the ARN of that resources.
+Statement elememt is global inside statement element we define multiple individual statement.
+
+
+
+###########Cross Account ##############
+craete a user in account A
+Create a cross account role in Account B> go to accountB> iam >role>create>choose another account> put account ID of account A and set permission> click on create role.
+allow user to switch to AccoutB role > iam > user>bob>click on inline policy and cretae a policy to switch > put ARN of role created in account B.
+
+########### Athena ################
+athena is a service that allow us to analyze the varoius logs file from s3 bu using sql query.
+SELECT
+ useridentity.arn,
+ eventname,
+ sourceipaddress,
+ eventtime
+FROM cloudtrail_logs
+LIMIT 100;
+
+
+############## RDS ################
+aws managed database.
+Amazon Relational Database Service (Amazon RDS) is a web service that makes it easier to set up, operate, and scale a relational database in the cloud. It provides cost-efficient, resizable capacity for an industry-standard relational database and manages common database administration tasks.
+Amazon RDS is available on several database instance types - optimized for memory, performance or I/O -and provides you with six familiar database engines to choose from, including Amazon Aurora, PostgreSQL, MySQL, MariaDB, Oracle, and Microsoft SQL Server. You can use the AWS Database Migration Service to easily migrate or replicate your existing databases to Amazon RDS.
+
+# 
+rds automatic backup v create krta haii
+action may jaaao snapshot select karo toh aapke pass backup mil jaayega
+uss backup say restore v kr skte hoo. action may restore ka v options deta haii.
+RDS deployment
+single az > free
+multi az paid
+read replica > Read Replicas  A Complete Separate RDS instance, Support only Read operation.
+aap jbb read replica create krte hoo kisi v created db ko select krke action may jaao aapko read replica dikh jaayega.
+read replica secondary db say create hota haii ismay aap sirf read kii query laga skte hoo
+Amazon arora > fastest engine. with 15 read replicas.
+and rest db engine has only 5 read replicas supported.
+########## Cloud trail #########
+it record the activities that happen within your infra as well as your server within aws account.
+menas kon saa user kbb log login krta haii yee sbb.
+event history may user name 
+trail > we need to crete 1st trail and then we can associate this trail to s3 or lambda functions.
+##### s3 also work as event notification as well as storage #####
+bucket > properties > event
+suppose hum chate haii kii s3 may kuch v update huaa hoo toh hame email aa jaaye
+toh aap ek topic create kijiye and event may jaake mentioned kr dijiye.
+
+#######AWS flow logs #####
+it allows what type of traffic is accepted or rejected by security group.
+How to enable flow logs > aws > ec2> network interface>flow logs
+so basically flow log monitor the traffic of this interface.
+############### Aws shield ########
+to prevent from ddos 
+########## API ##########
+application programming interface .
+This interface allows one application to communicate with second aplication through simple commaands.
+used to inetercommunicate between multiple servers.
+exapmle:
+Weather application 
+suppose agar aapko India ke saare city ka weather information chaye toh iske liye aapko ek application cretae krna parega and uss application ko weather app ke database say connect krna parega jahha pay saare information hote haii.
+curl -X GET "https://api.openweatherapi.org"
+whenever you have an API along with you must have access token similar as username & pwd
+
+common api method
+1 GET  > get some information  >> curl -X GET "https://api.openweatherapi.org"
+2 POST > create some new information > curl -X POST "https://api.digitalocen.com/instancetype, storage-50"
+3 PUT > update or replace existing resorce. curl -X PUT "https://api.openweatherapi.org"
+4 DELETE> to remove resources > curl -X DELETE "https://api.openweatherapi.org"
+
+exapmle 
+user | API | function
+suppose iss user ko agar iss function say connect krna haii toh api ke through krna parega.
+1 how to create function
+go to aws> lambda function >cretae hello world function.
+2 How to create API
+aws>amazon api getway>create api>http/websocket/rest api(access to internaet)/restapi private(access within vpc and add the lambda function.
+now we need to deploy that api > got to create api >action and select deploy after deploying you will get an url.
+so when you hit this url you will got to api gateway & then that api will move to function and trigger that function.
+
+
+########## ALB/ELB ###############
+types of LB
+1 classic load balancer CLB or ELB
+2 Network Load balancer NLB
+3 Application Load balancer ALB
+
+Classic load balancer.
+CLB (ELB) features:
+(1) works for both layer 4 (TCP) and 7 (HTTP)
+(2) only one that works in EC2-Classic in case you have a very old AWS account
+(3) supports application-defined sticky session cookies whereas ALB’s cookies can’t be controlled by the user
+(4) able to terminate TLS traffic and re-encrypt traffic as long as a SSL (self-signed certificate is provided) — end-to-end encryption is a usual requirement in many compliance programs
+Notes: ELB can be configured to verify the TLS certificate provided by the target for extra security
+Cons with CLB:
+(1) It isn’t compatible with EKS containers running on Fargate
+(2) it can’t forward traffic on more than one port per instance, and it doesn’t support forwarding to IP addresses — it can only forward to explicit EC2 instances or containers in ECS or EKS
+(3) ELB doesn’t support websockets, can work around this limitation using layer 4
+Usage: Though discouraged for usage by AWS, there are a couple of scenarios when we may need ELB:
+(1) when running on EC2-Classic
+(2) when you need to use your own sticky session cookies
+
+oldest types of load balancer.
+doesn't support http/2 protocol.
+Ip address as a target not suppport
+path based routing is not sipport
+
+# Network load balancer
+NLB features:
+(1) works at layer 4 only and able to handle both TCP, UDP, as well as TCP connections with TLS
+(2) has a very high performance
+(3) uses static IP addresses and can be assigned EIPs, which both ALB and ELB can’t
+(4) NLB natively preserves the source IP address in TCP/UDP packets; in contrast, ALB and ELB can be configured to add additional HTTP headers with forwarding information, and those have to be parsed properly by your application
+Usages:
+Anytime when ALB wouldn’t work
+(1) a near real-time data streaming service (video, stock quotes, etc.)
+(2) if your application uses non-HTTP protocols
+Their pricing is very similar, so this probably won’t be a large factor in your decision. Generally speaking, you would want to use an ALB for layer 7 load balancing and NLB for everything else.
+
+elastic ip,static ip
+
+# Aplication load balancer
+ALB features:
+(1) It has a wide range of routing rules for incoming requests based on host name, path, query string parameter, HTTP method, HTTP headers, source IP, or port number. It could also route requests to Lambda functions
+whereas ELB only allows you routing based on port number
+(2) can be configured to return a fixed response or a redirection
+(3) supports HTTP/2 and websockets
+(4) supports Server Name Indication (SNI), which allows its to serve many domain names, with limitation up to 25 certificates plus the default certificate
+whereas ELB allows only one domain name
+(5) supports user authentication via a variety of methods including OIDC, SAML, LDAP, Microsoft AD, sand well-known social identity providers such as Facebook and Google. his can help you off-load the user authentication part of your application to the load balancer
+Usages:
+(1) Typically used for web applications
+(2) For microservices, it can be used as an internal load balancer in front of EC2 or docker containers that implement a given service
+(3) can be used in front of an application implementing a REST API. However, AWS API Gateway would be a better choice
+http/https
+http/2
+path basd routing
+host based routing
+
+Basic load balancing features       ║  ALB    ║     NLB      ║  ELB    ║
+║                                     ║      ║           ║      ║
+║ Balance load between targets        ║ Yes  ║ Yes       ║ Yes  ║
+║ Perform health checks on targets    ║ Yes  ║ Yes       ║ Yes  ║
+║ Highly available                    ║ Yes  ║ Yes       ║ Yes  ║
+║ Elastic                             ║ Yes  ║ Yes       ║ Yes  ║
+║ TLS Termination                     ║ Yes  ║ Yes       ║ Yes  ║
+║ Performance                         ║ Good ║ Very high ║ Good ║
+║ Send logs and metrics to CloudWatch ║ Yes  ║ Yes       ║ Yes  ║
+║ Layer 4 (TCP)                       ║ No   ║ Yes       ║ Yes  ║
+║ Layer 7 (HTTP)                      ║ Yes  ║ No        ║ Yes  ║
+║ Running costs                       ║ Low  ║ Low       ║ Low  ║	
+
+
+#######KMS & AWS secret MAnager ######
+kms : for storing sensiticve data
+aws secret manager : store your secret and you can select rotation so after some period you can rotate.
+after that period secret manager provides you a new password.
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
