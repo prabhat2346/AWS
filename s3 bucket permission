@@ -55,6 +55,8 @@ s3 bucket is in your accountA & writing this bucket policy in accountA
     ]
 }
 ##############presign Url####################
+
+S3 pre-signed URLs are a form of an S3 URL that temporarily grants restricted access to a single S3 object to perform a single operation — either PUT or GET — for a predefined time limit
 --expires-in (integer) Number of seconds until the pre-signed URL expires. Default is 3600 seconds.
 To create a pre-signed URL with the default one hour lifetime that links to an object in an S3 bucket
 aws s3 presign s3://awsexamplebucket/test2.txt
