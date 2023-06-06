@@ -139,7 +139,7 @@ Statement elememt is global inside statement element we define multiple individu
 
 
 
-###########Cross Account ##############
+########### User Cross Account Access ##############
 craete a user in account A
 Create a cross account role in Account B> go to accountB> iam >role>create>choose another account> put account ID of account A and set permission> click on create role.
 allow user to switch to AccoutB role > iam > user>bob>click on inline policy and cretae a policy to switch > put ARN of role created in account B.
